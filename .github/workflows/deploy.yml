@@ -36,13 +36,3 @@ jobs:
               "docker run --pull always -d --name rock-of-ages-api -p 80:8000 -e DB_NAME=${{ secrets.DB_NAME }} -e DB_USER=${{ secrets.DB_USER }} -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} -e DB_HOST=${{ secrets.DB_HOST }} -e DB_PORT=${{ secrets.DB_PORT }} \"$IMAGE\""
             ]' \
             --region ${{ vars.AWS_REGION }}
-      - name: Run Django migrations on EC2 via SSM
-        run: |
-          aws ssm send-command \
-            --instance-ids "${{ vars.EC2_INSTANCE_ID }}" \
-            --document-name "AWS-RunShellScript" \
-            --comment "Run migrations" \
-            --parameters commands='[
-              "docker exec rock-of-ages-api python manage.py migrate"
-            ]' \
-            --region ${{ vars.AWS_REGION }}
