@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from django.contrib.auth.models import User
 from rockapi.models import Rock, Type
+from rockapi.permissions import IsOwnerOrReadOnly
 
 
 class RockView(ViewSet):
     """Rock view set"""
+    permission_classes = [IsOwnerOrReadOnly]
 
     def destroy(self, request, pk=None):
         """Handle DELETE requests for a single item
@@ -17,19 +19,35 @@ class RockView(ViewSet):
         """
         try:
             rock = Rock.objects.get(pk=pk)
-
-            if rock.user.id == request.auth.user.id:
-                rock.delete()
-                return Response(None, status=status.HTTP_204_NO_CONTENT)
-            else:
-                return Response({'message': 'You do not own that rock'}, status=status.HTTP_403_FORBIDDEN)
+            self.check_object_permissions(request, rock)
+            rock.delete()
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         except Rock.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
-        except Exception as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def update(self, request, pk=None):
+        """Handle PUT requests for a single item
 
+        Returns:
+            Response -- 204 status code
+        """
+        try:
+            rock = Rock.objects.get(pk=pk)
+            self.check_object_permissions(request, rock)
+            
+            # Get an object instance of a rock type
+            chosen_type = Type.objects.get(pk=request.data['typeId'])
+
+            # Create a rock object and assign it property values
+            rock.weight = request.data['weight']
+            rock.name = request.data['name']
+            rock.type = chosen_type
+            rock.save()
+
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+        except Rock.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request):
         """Handle POST requests for rocks
