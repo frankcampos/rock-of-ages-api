@@ -10,7 +10,7 @@ pylint = "*"
 djangorestframework = "*"
 django-cors-headers = "*"
 pylint-django = "*"
-psycopg2-binary = "*" 
+psycopg2-binary = "*"  # ← Add this line
 
 [dev-packages]
 
